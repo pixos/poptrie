@@ -16,3 +16,5 @@ Hirochika Asai
 
 The use of this software is limited to education, research, and evaluation
 purposes only.  Commercial use is strictly prohibited.
+
+For all other uses, contact the author(s).
