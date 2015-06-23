@@ -64,6 +64,10 @@ static struct radix_node * _next_block(struct radix_node *, int, int, int);
 static void
 _parse_triangle(struct radix_node *, u64 *, struct radix_node *, int, int);
 static void _clear_mark(struct radix_node *);
+static int _route_change_propagate(struct radix_node *, struct radix_node *);
+static int
+_route_change(struct poptrie *, struct radix_node **, u32, int, poptrie_leaf_t,
+              int);
 
 /*
  * Bit scan
@@ -254,7 +258,22 @@ int
 poptrie_route_change(struct poptrie *poptrie, u32 prefix, int len,
                      void *nexthop)
 {
-    return -1;
+    int i;
+    int n;
+
+    for ( i = 0; i < poptrie->fib.n; i++ ) {
+        if ( poptrie->fib.entries[i] == nexthop ) {
+            n = i;
+            break;
+        }
+    }
+    if ( i == poptrie->fib.n ) {
+        n = poptrie->fib.n;
+        poptrie->fib.entries[n] = nexthop;
+        poptrie->fib.n++;
+    }
+
+    return _route_change(poptrie, &poptrie->radix, prefix, len, n, 0);
 }
 
 /*
@@ -1590,6 +1609,65 @@ _clear_mark(struct radix_node *node)
     }
     if ( node->right ) {
         _clear_mark(node->right);
+    }
+}
+
+
+/*
+ * Change a route
+ */
+static int
+_route_change_propagate(struct radix_node *node, struct radix_node *ext)
+{
+    /* Mark if the cache is updated */
+    if ( ext == node->ext ) {
+        node->mark = 1;
+    }
+
+    if ( NULL != node->left ) {
+        node->mark |= _route_change_propagate(node->left, ext);
+    }
+    if ( NULL != node->right ) {
+        node->mark |= _route_change_propagate(node->right, ext);
+    }
+
+    return node->mark;
+}
+static int
+_route_change(struct poptrie *poptrie, struct radix_node **node, u32 prefix,
+              int len, poptrie_leaf_t nexthop, int depth)
+{
+    if ( NULL == *node ) {
+        /* Must have the entry for route_change() */
+        return -1;
+    }
+
+    if ( len == depth ) {
+        /* Matched */
+        if ( !(*node)->valid ) {
+            /* Not exists */
+            return -1;
+        }
+        /* Update the entry */
+        if ( (*node)->nexthop != nexthop ) {
+            (*node)->nexthop = nexthop;
+            (*node)->mark = _route_change_propagate(*node, *node);
+
+            /* Marked root */
+            return _update_subtree(poptrie, *node, prefix, depth);
+        }
+
+        return 0;
+    } else {
+        if ( (prefix >> (32 - depth - 1)) & 1 ) {
+            /* Right */
+            return _route_change(poptrie, &((*node)->right), prefix, len,
+                                 nexthop, depth + 1);
+        } else {
+            /* Left */
+            return _route_change(poptrie, &((*node)->left), prefix, len,
+                                 nexthop, depth + 1);
+        }
     }
 }
 
