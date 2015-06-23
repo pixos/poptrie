@@ -100,8 +100,7 @@ extern "C" {
     int poptrie_route_change(struct poptrie *, u32, int, void *);
     int poptrie_route_update(struct poptrie *, u32, int, void *);
     int poptrie_route_del(struct poptrie *, u32, int);
-    u32 poptrie_lookup(struct poptrie *, u32);
-    u32 poptrie_rt_lookup(struct poptrie *, u32);
+    void * poptrie_lookup(struct poptrie *, u32);
 
 #ifdef __cplusplus
 }

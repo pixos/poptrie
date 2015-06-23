@@ -330,9 +330,48 @@ poptrie_route_del(struct poptrie *poptrie, u32 prefix, int len)
 /*
  * Lookup a route by the specified address
  */
-u32
+void *
 poptrie_lookup(struct poptrie *poptrie, u32 addr)
 {
+    int inode;
+    int base;
+    int idx;
+    int pos;
+
+    /* Top tier */
+    idx = INDEX(addr, 0, POPTRIE_S);
+    pos = POPTRIE_S;
+    base = poptrie->root;
+
+    /* Direct pointing */
+    if ( poptrie->dir[idx] & ((u32)1 << 31) ) {
+        return poptrie->fib.entries[poptrie->dir[idx] & (((u32)1 << 31) - 1)];
+    } else {
+        base = poptrie->dir[idx];
+        idx = INDEX(addr, pos, 6);
+        pos += 6;
+    }
+
+    for ( ;; ) {
+        inode = base;
+        if ( VEC_BT(poptrie->nodes[inode].vector, idx) ) {
+            /* Internal node */
+            base = poptrie->nodes[inode].base1;
+            idx = POPCNT_LS(poptrie->nodes[inode].vector, idx);
+            /* Next internal node index */
+            base = base + (idx - 1);
+            /* Next node vector */
+            idx = INDEX(addr, pos, 6);
+            pos += 6;
+        } else {
+            /* Leaf */
+            base = poptrie->nodes[inode].base0;
+            idx = POPCNT_LS(poptrie->nodes[inode].leafvec, idx);
+            return poptrie->fib.entries[poptrie->leaves[base + idx - 1]];
+        }
+    }
+
+    /* Not to be reached here, but put this to dismiss a compiler warning. */
     return 0;
 }
 
