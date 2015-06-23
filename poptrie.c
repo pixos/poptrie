@@ -240,7 +240,7 @@ poptrie_route_add(struct poptrie *poptrie, u32 prefix, int len, void *nexthop)
     }
     if ( i == poptrie->fib.n ) {
         /* No matching FIB entry was found */
-        if ( poptrie->fib.n <= poptrie->fib.sz ) {
+        if ( poptrie->fib.n >= poptrie->fib.sz ) {
             /* The FIB mapping table is full */
             return -1;
         }
@@ -257,7 +257,7 @@ poptrie_route_add(struct poptrie *poptrie, u32 prefix, int len, void *nexthop)
         return ret;
     }
 
-    return -1;
+    return 0;
 }
 
 /*
