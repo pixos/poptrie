@@ -71,6 +71,12 @@ _route_change(struct poptrie *, struct radix_node **, u32, int, poptrie_leaf_t,
 static int
 _route_update(struct poptrie *, struct radix_node **, u32, int, poptrie_leaf_t,
               int, struct radix_node *);
+static int
+_route_del(struct poptrie *, struct radix_node **, u32, int, int,
+           struct radix_node *);
+static int
+_route_del_propagate(struct radix_node *, struct radix_node *,
+                     struct radix_node *);
 
 /*
  * Bit scan
@@ -317,7 +323,8 @@ poptrie_route_update(struct poptrie *poptrie, u32 prefix, int len,
 int
 poptrie_route_del(struct poptrie *poptrie, u32 prefix, int len)
 {
-    return -1;
+    /* Search and delete the corresponding entry */
+    return _route_del(poptrie, &poptrie->radix, prefix, len, 0, NULL);
 }
 
 /*
@@ -1754,6 +1761,94 @@ _route_update(struct poptrie *poptrie, struct radix_node **node, u32 prefix,
                                  nexthop, depth + 1, ext);
         }
     }
+}
+
+/*
+ * Delete a route
+ */
+static int
+_route_del_propagate(struct radix_node *node, struct radix_node *oext,
+                     struct radix_node *next)
+{
+    if ( oext == node->ext ) {
+        if ( oext->nexthop != EXT_NH(node) ) {
+            /* Next hop will change */
+            node->mark = 1;
+        }
+        /* Replace the extracted node */
+        node->ext = next;
+        node->mark = 1;
+    }
+    if ( NULL != node->left ) {
+        node->mark |= _route_del_propagate(node->left, oext, next);
+    }
+    if ( NULL != node->right ) {
+        node->mark |= _route_del_propagate(node->right, oext, next);
+    }
+
+    return node->mark;
+}
+static int
+_route_del(struct poptrie *poptrie, struct radix_node **node, u32 prefix,
+           int len, int depth, struct radix_node *ext)
+{
+    int ret;
+
+    if ( NULL == *node ) {
+        return -1;
+    }
+
+    if ( len == depth ) {
+        if ( !(*node)->valid ) {
+            /* No entry found */
+            return -1;
+        }
+
+        /* Propagate first */
+        (*node)->mark = _route_del_propagate(*node, *node, ext);
+
+        /* Invalidate the node */
+        (*node)->valid = 0;
+        (*node)->nexthop = 0;
+
+        /* Marked root */
+        ret = _update_subtree(poptrie, *node, prefix, depth);
+        if ( ret < 0 ) {
+            return -1;
+        }
+
+        /* May need to delete this node if both children are empty, but we
+           not care in this implementation because we have a large amount
+           memory and the unused memory do not affect the performance. */
+
+        return 0;
+    } else {
+        /* Update the propagate node if valid */
+        if ( (*node)->valid ) {
+            ext = *node;
+        }
+        /* Traverse a child node */
+        if ( (prefix >> (32 - depth - 1)) & 1 ) {
+            /* Right */
+            ret = _route_del(poptrie, &((*node)->right), prefix, len, depth + 1,
+                             ext);
+        } else {
+            /* Left */
+            ret = _route_del(poptrie, &((*node)->left), prefix, len, depth + 1,
+                             ext);
+        }
+        if ( ret < 0 ) {
+            return ret;
+        }
+        /* Delete this node if both children are empty */
+        if ( NULL == (*node)->left && NULL == (*node)->right ) {
+            free(*node);
+            *node = NULL;
+        }
+        return ret;
+    }
+
+    return -1;
 }
 
 /*
