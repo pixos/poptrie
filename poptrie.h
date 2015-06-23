@@ -17,29 +17,8 @@ typedef uint64_t u64;
 #define POPTRIE_S               18
 #define POPTRIE_INIT_FIB_SIZE   4096
 
-#define POPCNT(v)               __builtin_popcountll(v)
-#define ZEROCNT(v)              popcnt(~(v))
-#define POPCNT_LS(v, i)         popcnt((v) & (((u64)2 << (i)) - 1))
-#define ZEROCNT_LS(v, i)        popcnt((~(v)) & (((u64)2 << (i)) - 1))
+#define popcnt(v)               __builtin_popcountll(v)
 
-/*
- * Radix tree node
- */
-struct radix_node {
-    int valid;
-    struct radix_node *left;
-    struct radix_node *right;
-
-    /* Next hop */
-    u32 prefix;
-    int len;
-
-    /* Propagated route */
-    struct radix_node *exit;
-
-    /* Mark for update */
-    int mark;
-};
 
 /* Internal node */
 typedef struct poptrie_node {
@@ -52,6 +31,29 @@ typedef struct poptrie_node {
 /* Leaf node */
 typedef u16 poptrie_leaf_t;
 
+/*
+ * Radix tree node
+ */
+struct radix_node {
+    int valid;
+    struct radix_node *left;
+    struct radix_node *right;
+
+    /* Next hop */
+    u32 prefix;
+    int len;
+    poptrie_leaf_t nexthop;
+
+    /* Propagated route */
+    struct radix_node *ext;
+
+    /* Mark for update */
+    int mark;
+};
+
+/*
+ * FIB mapping table
+ */
 struct poptrie_fib {
     void **entries;
     int n;
@@ -67,6 +69,8 @@ struct poptrie {
     struct poptrie_fib fib;
 
     /* Memory management */
+    poptrie_node_t *nodes;
+    poptrie_leaf_t *leaves;
     void *cnodes;
     void *cleaves;
 
@@ -92,8 +96,9 @@ extern "C" {
     /* in poptrie.c */
     struct poptrie * poptrie_init(struct poptrie *, int, int);
     void poptrie_release(struct poptrie *);
-    int poptrie_route_add(struct poptrie *, u32, int, u32);
-    int poptrie_route_update(struct poptrie *, u32, int, u32);
+    int poptrie_route_add(struct poptrie *, u32, int, void *);
+    int poptrie_route_change(struct poptrie *, u32, int, void *);
+    int poptrie_route_update(struct poptrie *, u32, int, void *);
     int poptrie_route_del(struct poptrie *, u32, int);
     u32 poptrie_lookup(struct poptrie *, u32);
     u32 poptrie_rt_lookup(struct poptrie *, u32);
