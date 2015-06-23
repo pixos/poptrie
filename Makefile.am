@@ -3,14 +3,11 @@
 # All rights reserved.
 #
 
-#SUBDIRS = 
-#EXTRA_DIST = 
-#noinst_HEADERS = 
-#INCLUDES = -I$(top_srcdir)/include
+noinst_HEADERS = buddy.h
 
 bin_PROGRAMS = poptrie_test_basic
 lib_LTLIBRARIES = libpoptrie.la
-libpoptrie_la_SOURCES = poptrie.c poptrie.h
+libpoptrie_la_SOURCES = poptrie.c poptrie.h buddy.c buddy.h
 poptrie_test_basic_SOURCES = tests/basic.c
 poptrie_test_basic_LDADD = libpoptrie.la
 #prog_LDFLAGS = -static $(top_builddir)/libpoptrie.la
