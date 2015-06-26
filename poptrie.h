@@ -101,6 +101,7 @@ extern "C" {
     int poptrie_route_update(struct poptrie *, u32, int, void *);
     int poptrie_route_del(struct poptrie *, u32, int);
     void * poptrie_lookup(struct poptrie *, u32);
+    void * poptrie_rib_lookup(struct poptrie *, u32);
 
 #ifdef __cplusplus
 }
