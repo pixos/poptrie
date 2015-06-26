@@ -77,6 +77,7 @@ _route_del(struct poptrie *, struct radix_node **, u32, int, int,
 static int
 _route_del_propagate(struct radix_node *, struct radix_node *,
                      struct radix_node *);
+static u32 _rib_lookup(struct radix_node *, u32, int, struct radix_node *);
 
 /*
  * Bit scan
@@ -377,6 +378,15 @@ poptrie_lookup(struct poptrie *poptrie, u32 addr)
 
     /* Not to be reached here, but put this to dismiss a compiler warning. */
     return 0;
+}
+
+/*
+ * Lookup the next hop from the radix tree (RIB table)
+ */
+void *
+poptrie_rib_lookup(struct poptrie *poptrie, u32 addr)
+{
+    return poptrie->fib.entries[_rib_lookup(poptrie->radix, addr, 0, NULL)];
 }
 
 /*
@@ -1888,6 +1898,43 @@ _route_del_propagate(struct radix_node *node, struct radix_node *oext,
     return node->mark;
 }
 
+/*
+ * Lookup from the RIB table
+ */
+static u32
+_rib_lookup(struct radix_node *node, u32 addr, int depth, struct radix_node *en)
+{
+    if ( NULL == node ) {
+        return 0;
+    }
+    if ( node->valid ) {
+        en = node;
+    }
+
+    if ( (addr >> (32 - depth - 1)) & 1 ) {
+        /* Right */
+        if ( NULL == node->right ) {
+            if ( NULL != en ) {
+                return en->nexthop;
+            } else {
+                return 0;
+            }
+        } else {
+            return _rib_lookup(node->right, addr, depth + 1, en);
+        }
+    } else {
+        /* Left */
+        if ( NULL == node->left ) {
+            if ( NULL != en ) {
+                return en->nexthop;
+            } else {
+                return 0;
+            }
+        } else {
+            return _rib_lookup(node->left, addr, depth + 1, en);
+        }
+    }
+}
 
 /*
  * Local variables:
