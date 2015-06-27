@@ -78,6 +78,7 @@ static int
 _route_del_propagate(struct radix_node *, struct radix_node *,
                      struct radix_node *);
 static u32 _rib_lookup(struct radix_node *, u32, int, struct radix_node *);
+static void _release_radix(struct radix_node *);
 
 /*
  * Bit scan
@@ -197,6 +198,9 @@ poptrie_init(struct poptrie *poptrie, int sz1, int sz0)
 void
 poptrie_release(struct poptrie *poptrie)
 {
+    /* Release the radix tree */
+    _release_radix(poptrie->radix);
+
     if ( poptrie->nodes ) {
         free(poptrie->nodes);
     }
@@ -1933,6 +1937,19 @@ _rib_lookup(struct radix_node *node, u32 addr, int depth, struct radix_node *en)
         } else {
             return _rib_lookup(node->left, addr, depth + 1, en);
         }
+    }
+}
+
+/*
+ * Free the allocated memory by the radix tree
+ */
+static void
+_release_radix(struct radix_node *node)
+{
+    if ( NULL != node  ) {
+        _release_radix(node->left);
+        _release_radix(node->right);
+        free(node);
     }
 }
 
