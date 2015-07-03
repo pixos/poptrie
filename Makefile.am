@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libpoptrie.la
 libpoptrie_la_SOURCES = poptrie.c poptrie.h buddy.c buddy.h
 poptrie_test_basic_SOURCES = tests/basic.c
 poptrie_test_basic_LDADD = libpoptrie.la
-#prog_LDFLAGS = -static $(top_builddir)/libpoptrie.la
+poptrie_test_basic_DEPENDENCIES = libpoptrie.la
 
 CLEANFILES = *~
 
