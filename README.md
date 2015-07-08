@@ -48,8 +48,8 @@ contact the author(s).
          returns a NULL value and set errno.  If a non-NULL poptrie argument is
          specified, the returned value shall be the original value of the
          poptrie argument if successful, or a NULL value otherwise.
-    
-    
+
+
     NAME
          poptrie_release -- release the poptrie control data structure
          
@@ -64,8 +64,8 @@ contact the author(s).
 
     RETURN VALUES
          The poptrie_release() function does not return a value.
-    
-    
+
+
     NAME
          poptrie_route_add, poptrie_route_change, poptrie_route_update,
          poptrie_route_del, poptrie_route_lookup -- operate the poptrie
