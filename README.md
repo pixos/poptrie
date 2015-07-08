@@ -20,6 +20,8 @@ contact the author(s).
 
 ## APIs
 
+### Initialization
+
     NAME
          poptrie_init -- initialize a poptrie control data structure
          
@@ -50,6 +52,8 @@ contact the author(s).
          poptrie argument if successful, or a NULL value otherwise.
 
 
+### Release
+
     NAME
          poptrie_release -- release the poptrie control data structure
          
@@ -65,6 +69,8 @@ contact the author(s).
     RETURN VALUES
          The poptrie_release() function does not return a value.
 
+
+### Operations
 
     NAME
          poptrie_route_add, poptrie_route_change, poptrie_route_update,
