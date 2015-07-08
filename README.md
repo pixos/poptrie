@@ -34,7 +34,7 @@ contact the author(s).
          structure specified by the poptrie argument with two memory allocation
          parameters sz1 and sz0.
          
-	 If the poptrie argument is NULL, a new data structure is allocated and
+         If the poptrie argument is NULL, a new data structure is allocated and
          initialized.  Otherwise, the data structure specified by the poptrie
          argument is initialized.
          
