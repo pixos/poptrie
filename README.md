@@ -39,8 +39,8 @@ contact the author(s).
          argument is initialized.
          
          The sz1 and sz0 parameters specify the size of pre-allocated entries
-	 in the arrays of the internal and leaf nodes, respectively.  2 to the
-	 power of sz1 and sz0 entries are allocated for the internal and leaf
+         in the arrays of the internal and leaf nodes, respectively.  2 to the
+         power of sz1 and sz0 entries are allocated for the internal and leaf
          nodes.  In the implementation, these nodes are managed by the buddy
          system memory allocator.
 
