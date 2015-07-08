@@ -104,7 +104,7 @@ contact the author(s).
          corresponding prefix does not exist.  On the other hand,
          poptrie_route_update() does.
          
-	 The poptrie_route_del() function deletes the prefix specified by the
+         The poptrie_route_del() function deletes the prefix specified by the
          prefix argument with the prefix length of len.
          
          The poptrie_lookup() function looks up the corresponding prefix by
