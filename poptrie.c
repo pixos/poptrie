@@ -1374,7 +1374,6 @@ static void
 _update_clean_root(struct poptrie *poptrie, int nroot, int oroot)
 {
     int i;
-    int j;
     int nn;
     int on;
     int nbase;
@@ -1449,7 +1448,7 @@ _update_clean_inode(struct poptrie *poptrie, int ninode, int oinode)
 
     if ( ninode >= 0 ) {
         obase = poptrie->nodes[oinode].base1;
-        nbase = poptrie->nodes[ninode + i].base1;
+        nbase = poptrie->nodes[ninode].base1;
         for ( i = 0; i < (1 << 6); i++ ) {
             if ( VEC_BT(poptrie->nodes[oinode].vector, i) ) {
                 if ( VEC_BT(poptrie->nodes[ninode].vector, i) ) {
