@@ -1,5 +1,5 @@
 /*_
- * Copyright (c) 2014-2015 Hirochika Asai <asai@jar.jp>
+ * Copyright (c) 2014-2016 Hirochika Asai <asai@jar.jp>
  * All rights reserved.
  */
 
@@ -10,7 +10,7 @@
 
 #define EXT_NH(n)       ((n)->ext ? (n)->ext->nexthop : 0)
 #define INDEX(a, s, n) \
-    ((u64)(a) << 32 >> (64 - ((s) + (n)))) & ((1 << (n)) - 1)
+    (((u64)(a) << 32 >> (64 - ((s) + (n)))) & ((1 << (n)) - 1))
 #define VEC_INIT(v)     ((v) = 0)
 #define VEC_BT(v, i)    ((v) & (u64)1 << (i))
 #define BITINDEX(v)     ((v) & ((1 << 6) - 1))
