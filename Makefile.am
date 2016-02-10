@@ -21,6 +21,6 @@ CLEANFILES = *~
 
 test: all
 	@echo "Testing all..."
-#	$(top_builddir)/poptrie_test_basic
+	$(top_builddir)/poptrie_test_basic
 	$(top_builddir)/poptrie_test_basic6
 
