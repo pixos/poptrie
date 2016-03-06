@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 
 /* Macro for testing */
