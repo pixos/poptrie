@@ -86,14 +86,11 @@ static void _release_radix(struct radix_node *);
 static __inline__ int
 bsr(u64 x)
 {
-    u64 r;
-
     if ( !x ) {
         return 0;
     }
-    __asm__ __volatile__ ( " bsrq %1,%0 " : "=r"(r) : "r"(x) );
 
-    return r;
+    return ((sizeof(unsigned long long) << 3) - 1) - __builtin_clzll(x);
 }
 
 
