@@ -1943,7 +1943,7 @@ _rib_lookup(struct radix_node *node, u32 addr, int depth, struct radix_node *en)
 static void
 _release_radix(struct radix_node *node)
 {
-    if ( NULL != node  ) {
+    if ( NULL != node ) {
         _release_radix(node->left);
         _release_radix(node->right);
         free(node);
