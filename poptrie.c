@@ -435,10 +435,9 @@ _update_part(struct poptrie *poptrie, struct radix_node *tnode, int inode,
 
             /* Replace the root with an atomic instruction */
             nroot = ((u32)1 << 31) | sleaf;
-            __asm__ __volatile__ ("mfence");
-            __asm__ __volatile__ ("lock xchgl %%eax,%0"
-                                  : "=m"(*root), "=a"(oroot) : "a"(nroot));
-            __asm__ __volatile__ ("mfence");
+            oroot = *root;
+            __sync_lock_test_and_set(root, nroot);
+
             if ( !alt ) {
                 _update_clean_subtree(poptrie, oroot);
                 if ( (int)oroot >= 0 ) {
@@ -459,10 +458,8 @@ _update_part(struct poptrie *poptrie, struct radix_node *tnode, int inode,
         poptrie->root = nroot;
 
         /* Replace the root with an atomic instruction */
-        __asm__ __volatile__ ("mfence");
-        __asm__ __volatile__ ("lock xchgl %%eax,%0"
-                              : "=m"(*root), "=a"(oroot) : "a"(nroot));
-        __asm__ __volatile__ ("mfence");
+        oroot = *root;
+        __sync_lock_test_and_set(root, nroot);
 
         /* Clean */
         if ( !alt && !(oroot & ((u32)1 << 31)) ) {
@@ -815,10 +812,8 @@ _update_part(struct poptrie *poptrie, struct radix_node *tnode, int inode,
     poptrie->root = nroot;
 
     /* Swap */
-    __asm__ __volatile__ ("mfence");
-    __asm__ __volatile__ ("lock xchgl %%eax,%0"
-                          : "=m"(*root), "=a"(oroot) : "a"(nroot));
-    __asm__ __volatile__ ("mfence");
+    oroot = *root;
+    __sync_lock_test_and_set(root, nroot);
 
     /* Clean */
     if ( !alt && !(oroot & ((u32)1<<31)) ) {
