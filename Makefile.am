@@ -3,11 +3,13 @@
 # All rights reserved.
 #
 
+EXTRA_DIST = README.md LICENSE
+
 noinst_HEADERS = buddy.h
 
 bin_PROGRAMS = poptrie_test_basic poptrie_test_basic6
 lib_LTLIBRARIES = libpoptrie.la
-libpoptrie_la_SOURCES = poptrie.c poptrie6.c poptrie.h buddy.c buddy.h
+libpoptrie_la_SOURCES = poptrie.c poptrie6.c poptrie.h buddy.c buddy.h poptrie_private.h
 
 poptrie_test_basic_SOURCES = tests/basic.c
 poptrie_test_basic_LDADD = libpoptrie.la
