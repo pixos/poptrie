@@ -195,7 +195,7 @@ test_lookup_linx(void)
         }
         addr2 = in6_addr_to_uint128(&v6addr);
 
-        /* Add an entry */
+        /* Add an entry (use the least significant 64 bits for testing) */
         ret = poptrie6_route_add(poptrie, addr1, prefixlen, (void *)(u64)addr2);
         if ( ret < 0 ) {
             return -1;

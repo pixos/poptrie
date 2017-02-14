@@ -3,7 +3,7 @@
 # All rights reserved.
 #
 
-EXTRA_DIST = README.md LICENSE
+EXTRA_DIST = README.md LICENSE tests/linx-rib.20141217.0000-p46.txt tests/linx-rib-ipv6.20141225.0000.p69.txt tests/linx-rib.20141217.0000-p52.txt tests/linx-update.20141217.0000-p52.txt
 
 noinst_HEADERS = buddy.h
 
