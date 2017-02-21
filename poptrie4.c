@@ -1,5 +1,5 @@
 /*_
- * Copyright (c) 2016-2017 Hirochika Asai <asai@jar.jp>
+ * Copyright (c) 2014-2017 Hirochika Asai <asai@jar.jp>
  * All rights reserved.
  */
 
@@ -10,52 +10,51 @@
 #include <string.h>
 #include <alloca.h>
 
-static inline __uint128_t
-INDEX(__uint128_t a, int s, int n)
-{
-    if ( 0 == ((s) + (n)) ) {
-        return 0;
-    } else {
-        return ((a) >> (128 - ((s) + (n)))) & ((1ULL << (n)) - 1);
-    }
-}
+#define INDEX(a, s, n) \
+    (((u64)(a) << 32 >> (64 - ((s) + (n)))) & ((1 << (n)) - 1))
 
-
-#define KEYLENGTH       128
+#define KEYLENGTH       32
 
 
 /* Prototype declarations */
 static int
-_route_add(struct poptrie *, struct radix_node **, __uint128_t, int,
-           poptrie_leaf_t, int, struct radix_node *);
+_route_add(struct poptrie *, struct radix_node **, u32, int, poptrie_leaf_t,
+           int, struct radix_node *);
 static int
-_update_subtree(struct poptrie *, struct radix_node *, __uint128_t, int);
+_update_subtree(struct poptrie *, struct radix_node *, u32, int);
 static int
 _descend_and_update(struct poptrie *, struct radix_node *, int,
-                    struct poptrie_stack *, __uint128_t, int, int, u32 *);
+                        struct poptrie_stack *, u32, int, int, u32 *);
 static int
-_update_dp1(struct poptrie *, struct radix_node *, int, __uint128_t, int, int);
+_update_inode_chunk(struct poptrie *, struct radix_node *, int,
+                    poptrie_node_t *, poptrie_leaf_t *);
 static int
-_update_dp2(struct poptrie *, struct radix_node *, int, __uint128_t, int, int);
+_update_inode(struct poptrie *, struct radix_node *, int, poptrie_node_t *,
+              poptrie_leaf_t *);
+static int
+_update_dp1(struct poptrie *, struct radix_node *, int, u32, int, int);
+static int
+_update_dp2(struct poptrie *, struct radix_node *, int, u32, int, int);
+static void
+_parse_triangle(struct radix_node *, u64 *, struct radix_node *, int, int);
 static void _clear_mark(struct radix_node *);
 static int
-_route_change(struct poptrie *, struct radix_node **, __uint128_t, int,
-              poptrie_leaf_t, int);
+_route_change(struct poptrie *, struct radix_node **, u32, int, poptrie_leaf_t,
+              int);
 static int
-_route_update(struct poptrie *, struct radix_node **, __uint128_t, int,
-              poptrie_leaf_t, int, struct radix_node *);
+_route_update(struct poptrie *, struct radix_node **, u32, int, poptrie_leaf_t,
+              int, struct radix_node *);
 static int
-_route_del(struct poptrie *, struct radix_node **, __uint128_t, int, int,
+_route_del(struct poptrie *, struct radix_node **, u32, int, int,
            struct radix_node *);
 static poptrie_fib_index_t
-_rib_lookup(struct radix_node *, __uint128_t, int, struct radix_node *);
+_rib_lookup(struct radix_node *, u32, int, struct radix_node *);
 
 /*
  * Add a route
  */
 int
-poptrie6_route_add(struct poptrie *poptrie, __uint128_t prefix, int len,
-                   void *nexthop)
+poptrie_route_add(struct poptrie *poptrie, u32 prefix, int len, void *nexthop)
 {
     int ret;
     int n;
@@ -78,27 +77,23 @@ poptrie6_route_add(struct poptrie *poptrie, __uint128_t prefix, int len,
  * Change a route
  */
 int
-poptrie6_route_change(struct poptrie *poptrie, __uint128_t prefix, int len,
+poptrie_route_change(struct poptrie *poptrie, u32 prefix, int len,
                      void *nexthop)
 {
     int n;
-    int ret;
 
     /* Find the FIB entry mapping first */
     n = poptrie_fib_ref(poptrie, nexthop);
 
-    /* Try to route change */
-    ret = _route_change(poptrie, &poptrie->radix, prefix, len, n, 0);
-
-    return ret;
+    return _route_change(poptrie, &poptrie->radix, prefix, len, n, 0);
 }
 
 /*
  * Update a route (add if not exists like BGP update)
  */
 int
-poptrie6_route_update(struct poptrie *poptrie, __uint128_t prefix, int len,
-                      void *nexthop)
+poptrie_route_update(struct poptrie *poptrie, u32 prefix, int len,
+                     void *nexthop)
 {
     int ret;
     int n;
@@ -119,7 +114,7 @@ poptrie6_route_update(struct poptrie *poptrie, __uint128_t prefix, int len,
  * Delete a route
  */
 int
-poptrie6_route_del(struct poptrie *poptrie, __uint128_t prefix, int len)
+poptrie_route_del(struct poptrie *poptrie, u32 prefix, int len)
 {
     /* Search and delete the corresponding entry */
     return _route_del(poptrie, &poptrie->radix, prefix, len, 0, NULL);
@@ -129,7 +124,7 @@ poptrie6_route_del(struct poptrie *poptrie, __uint128_t prefix, int len)
  * Lookup a route by the specified address
  */
 void *
-poptrie6_lookup(struct poptrie *poptrie, __uint128_t addr)
+poptrie_lookup(struct poptrie *poptrie, u32 addr)
 {
     int inode;
     int base;
@@ -177,7 +172,7 @@ poptrie6_lookup(struct poptrie *poptrie, __uint128_t addr)
  * Lookup the next hop from the radix tree (RIB table)
  */
 void *
-poptrie6_rib_lookup(struct poptrie *poptrie, __uint128_t addr)
+poptrie_rib_lookup(struct poptrie *poptrie, u32 addr)
 {
     poptrie_fib_index_t idx;
 
@@ -189,8 +184,8 @@ poptrie6_rib_lookup(struct poptrie *poptrie, __uint128_t addr)
  * Updated the marked subtree
  */
 static int
-_update_subtree(struct poptrie *poptrie, struct radix_node *node,
-                __uint128_t prefix, int depth)
+_update_subtree(struct poptrie *poptrie, struct radix_node *node, u32 prefix,
+                int depth)
 {
     int ret;
     struct poptrie_stack stack[KEYLENGTH / 6 + 1];
@@ -206,7 +201,7 @@ _update_subtree(struct poptrie *poptrie, struct radix_node *node,
     stack[0].width = -1;
 
     if ( depth < POPTRIE_S ) {
-        /* The update is performed from more than one entries in the direct
+         /* The update is performed from more than one entries in the direct
            pointing array. */
 
         /* Copy the direct pointing array from the current one */
@@ -261,7 +256,6 @@ _update_subtree(struct poptrie *poptrie, struct radix_node *node,
             /* If the entry points to an internal node */
             inode = poptrie->dir[idx];
         }
-        /* Perform the update procedure by descending the trie */
         ret = _descend_and_update(poptrie, ntnode, inode, &stack[1], prefix,
                                   depth, POPTRIE_S, &poptrie->dir[idx]);
     }
@@ -280,8 +274,8 @@ _update_subtree(struct poptrie *poptrie, struct radix_node *node,
  */
 static int
 _descend_and_update(struct poptrie *poptrie, struct radix_node *tnode,
-                    int inode, struct poptrie_stack *stack, __uint128_t prefix,
-                    int len, int depth, u32 *root)
+                    int inode, struct poptrie_stack *stack, u32 prefix, int len,
+                    int depth, u32 *root)
 {
     int idx;
     int p;
@@ -324,7 +318,6 @@ _descend_and_update(struct poptrie *poptrie, struct radix_node *tnode,
             /* Internal node, then traverse to the child */
             p = POPCNT_LS(node->vector, BITINDEX(idx));
             n = (p - 1);
-            /* The root of the next block */
             ninode = node->base1 + n;
         } else {
             /* Leaf node, then update from this node */
@@ -344,7 +337,7 @@ _descend_and_update(struct poptrie *poptrie, struct radix_node *tnode,
  */
 static int
 _update_dp1(struct poptrie *poptrie, struct radix_node *tnode, int alt,
-            __uint128_t prefix, int len, int depth)
+            u32 prefix, int len, int depth)
 {
     int i;
     int idx;
@@ -401,7 +394,7 @@ _update_dp1(struct poptrie *poptrie, struct radix_node *tnode, int alt,
 }
 static int
 _update_dp2(struct poptrie *poptrie, struct radix_node *tnode, int alt,
-            __uint128_t prefix, int len, int depth)
+            u32 prefix, int len, int depth)
 {
     int i;
     int idx;
@@ -481,7 +474,7 @@ _update_dp2(struct poptrie *poptrie, struct radix_node *tnode, int alt,
  */
 static int
 _route_add(struct poptrie *poptrie, struct radix_node **node,
-           __uint128_t prefix, int len, poptrie_leaf_t nexthop, int depth,
+           u32 prefix, int len, poptrie_leaf_t nexthop, int depth,
            struct radix_node *ext)
 {
     if ( NULL == *node ) {
@@ -532,8 +525,8 @@ _route_add(struct poptrie *poptrie, struct radix_node **node,
  * Change a route
  */
 static int
-_route_change(struct poptrie *poptrie, struct radix_node **node,
-              __uint128_t prefix, int len, poptrie_leaf_t nexthop, int depth)
+_route_change(struct poptrie *poptrie, struct radix_node **node, u32 prefix,
+              int len, poptrie_leaf_t nexthop, int depth)
 {
     int ret;
     int n;
@@ -556,7 +549,7 @@ _route_change(struct poptrie *poptrie, struct radix_node **node,
             (*node)->mark = poptrie_route_change_propagate(*node, *node);
 
             /* Marked root */
-            ret = _update_subtree(poptrie, *node, prefix, depth);
+            ret =  _update_subtree(poptrie, *node, prefix, depth);
 
             /* Dereference this entry */
             poptrie->fib.entries[n].refs--;
@@ -586,8 +579,8 @@ _route_change(struct poptrie *poptrie, struct radix_node **node,
  * Update a route
  */
 static int
-_route_update(struct poptrie *poptrie, struct radix_node **node,
-              __uint128_t prefix, int len, poptrie_leaf_t nexthop, int depth,
+_route_update(struct poptrie *poptrie, struct radix_node **node, u32 prefix,
+              int len, poptrie_leaf_t nexthop, int depth,
               struct radix_node *ext)
 {
     int ret;
@@ -660,8 +653,8 @@ _route_update(struct poptrie *poptrie, struct radix_node **node,
  * Delete a route
  */
 static int
-_route_del(struct poptrie *poptrie, struct radix_node **node,
-           __uint128_t prefix, int len, int depth, struct radix_node *ext)
+_route_del(struct poptrie *poptrie, struct radix_node **node, u32 prefix,
+           int len, int depth, struct radix_node *ext)
 {
     int ret;
     int n;
@@ -731,8 +724,7 @@ _route_del(struct poptrie *poptrie, struct radix_node **node,
  * Lookup from the RIB table
  */
 static poptrie_fib_index_t
-_rib_lookup(struct radix_node *node, __uint128_t addr, int depth,
-            struct radix_node *en)
+_rib_lookup(struct radix_node *node, u32 addr, int depth, struct radix_node *en)
 {
     if ( NULL == node ) {
         return 0;

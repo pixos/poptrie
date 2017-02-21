@@ -59,10 +59,10 @@ in6_addr_to_uint128(struct in6_addr *in6)
 static int
 test_init(void)
 {
-    struct poptrie6 *poptrie;
+    struct poptrie *poptrie;
 
     /* Initialize */
-    poptrie = poptrie6_init(NULL, 19, 22);
+    poptrie = poptrie_init(NULL, 19, 22);
     if ( NULL == poptrie ) {
         return -1;
     }
@@ -70,7 +70,7 @@ test_init(void)
     TEST_PROGRESS();
 
     /* Release */
-    poptrie6_release(poptrie);
+    poptrie_release(poptrie);
 
     return 0;
 }
@@ -78,13 +78,13 @@ test_init(void)
 static int
 test_lookup(void)
 {
-    struct poptrie6 *poptrie;
+    struct poptrie *poptrie;
     int ret;
     __uint128_t addr;
     void *nexthop;
 
     /* Initialize */
-    poptrie = poptrie6_init(NULL, 19, 22);
+    poptrie = poptrie_init(NULL, 19, 22);
     if ( NULL == poptrie ) {
         return -1;
     }
@@ -137,7 +137,7 @@ test_lookup(void)
     TEST_PROGRESS();
 
     /* Release */
-    poptrie6_release(poptrie);
+    poptrie_release(poptrie);
 
     return 0;
 }
@@ -145,7 +145,7 @@ test_lookup(void)
 static int
 test_lookup_linx(void)
 {
-    struct poptrie6 *poptrie;
+    struct poptrie *poptrie;
     FILE *fp;
     char buf[4096];
     char v6str1[256];
@@ -166,7 +166,7 @@ test_lookup_linx(void)
     }
 
     /* Initialize */
-    poptrie = poptrie6_init(NULL, 19, 22);
+    poptrie = poptrie_init(NULL, 19, 22);
     if ( NULL == poptrie ) {
         return -1;
     }
@@ -195,7 +195,7 @@ test_lookup_linx(void)
         }
         addr2 = in6_addr_to_uint128(&v6addr);
 
-        /* Add an entry */
+        /* Add an entry (use the least significant 64 bits for testing) */
         ret = poptrie6_route_add(poptrie, addr1, prefixlen, (void *)(u64)addr2);
         if ( ret < 0 ) {
             return -1;
@@ -218,7 +218,7 @@ test_lookup_linx(void)
     }
 
     /* Release */
-    poptrie6_release(poptrie);
+    poptrie_release(poptrie);
 
     /* Close */
     fclose(fp);

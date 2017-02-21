@@ -1,10 +1,10 @@
 #
-# Copyright (c) 2015 Hirochika Asai <asai@jar.jp>
+# Copyright (c) 2015,2017 Hirochika Asai <asai@jar.jp>
 # All rights reserved.
 #
 
 AC_PREREQ(2.59)
-AC_INIT([poptrie], [0.1.0], [asai@jar.jp])
+AC_INIT([poptrie], [0.2.0], [asai@jar.jp])
 AC_CONFIG_SRCDIR([poptrie.c])
 AC_CONFIG_HEADER([config.h])
 

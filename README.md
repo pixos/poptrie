@@ -43,6 +43,9 @@ contact the author(s).
          power of sz1 and sz0 entries are allocated for the internal and leaf
          nodes.  In the implementation, these nodes are managed by the buddy
          system memory allocator.
+         
+        The recommended parameters for sz1 and sz0 for IP routing tables are 19
+        and 22, respectively.
 
     RETURN VALUES
          Upon successful completion, the poptrie_init() function returns the
@@ -70,11 +73,12 @@ contact the author(s).
          The poptrie_release() function does not return a value.
 
 
-### Operations
+### Operations for IPv4
 
     NAME
          poptrie_route_add, poptrie_route_change, poptrie_route_update,
-         poptrie_route_del, poptrie_route_lookup -- operate the poptrie
+         poptrie_route_del, poptrie_route_lookup -- operate the poptrie for
+         IPv4 (32-bit addresses)
          
     SYNOPSIS
          int
@@ -116,6 +120,58 @@ contact the author(s).
          value of 0.  Otherwise, they return a value of -1.
          
          The poptrie_lookup() function returns a next hop corresponding to the
+         addr argument.  If no matching entry is found, a NULL value is
+         returned.
+
+
+### Operations for IPv6
+
+    NAME
+         poptrie6_route_add, poptrie6_route_change, poptrie6_route_update,
+         poptrie6_route_del, poptrie6_route_lookup -- operate the poptrie for
+         IPv6 (128-bit addresses)
+         
+    SYNOPSIS
+         int
+         poptrie6_route_add(struct poptrie *poptrie, __uint128_t prefix,
+         int len, void *nexthop);
+         
+         int
+         poptrie6_route_change(struct poptrie *poptrie, __uint128_t prefix,
+         int len, void *nexthop);
+         
+         int
+         poptrie6_route_update(struct poptrie *poptrie, __uint128_t prefix,
+         int len, void *nexthop);
+         
+         int
+         poptrie6_route_del(struct poptrie *poptrie, __uint128_t prefix,
+         int len);
+         
+         void *
+         poptrie6_lookup(struct poptrie *poptrie, __uint128_t addr);
+         
+    DESCRIPTION
+         The poptrie6_route_add(), poptrie6_route_change(), and
+         poptrie6_route_update() functions add, change, and update the next hop
+         specified by the nexthop argument to the prefix specified by the prefix
+         argument with the prefix length specified by the len argument.  The
+         poptrie6_route_change() function does not add the next hop when the
+         corresponding prefix does not exist.  On the other hand,
+         poptrie6_route_update() does.
+         
+         The poptrie6_route_del() function deletes the prefix specified by the
+         prefix argument with the prefix length of len.
+         
+         The poptrie6_lookup() function looks up the corresponding prefix by
+         the specified argument of addr.
+         
+    RETURN VALUES
+         On successful, the poptrie6_route_add(), poptrie6_route_change(),
+         poptrie6_route_update(), and poptrie6_route_del() functions return a
+         value of 0.  Otherwise, they return a value of -1.
+         
+         The poptrie6_lookup() function returns a next hop corresponding to the
          addr argument.  If no matching entry is found, a NULL value is
          returned.
 
