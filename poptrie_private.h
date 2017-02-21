@@ -10,7 +10,6 @@
 #include "poptrie.h"
 #include <stdlib.h>
 #include <string.h>
-#include <alloca.h>
 
 /* Bit test */
 #define BT(a, b)        (((a) >> (b)) & 1)
