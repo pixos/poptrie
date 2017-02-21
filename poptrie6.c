@@ -8,7 +8,6 @@
 #include "poptrie_private.h"
 #include <stdlib.h>
 #include <string.h>
-#include <alloca.h>
 
 static inline __uint128_t
 INDEX(__uint128_t a, int s, int n)
