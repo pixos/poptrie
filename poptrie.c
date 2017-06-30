@@ -99,13 +99,13 @@ poptrie_init(struct poptrie *poptrie, int sz1, int sz0)
     }
 
     /* Prepare the FIB mapping table */
-    poptrie->fib.entries = malloc(sizeof(struct poptrie_fib_entry *)
+    poptrie->fib.entries = malloc(sizeof(struct poptrie_fib_entry)
                                   * POPTRIE_INIT_FIB_SIZE);
     if ( NULL == poptrie->fib.entries ) {
         poptrie_release(poptrie);
         return NULL;
     }
-    memset(poptrie->fib.entries, 0, sizeof(struct poptrie_fib_entry *)
+    memset(poptrie->fib.entries, 0, sizeof(struct poptrie_fib_entry)
            * POPTRIE_INIT_FIB_SIZE);
     poptrie->fib.sz = POPTRIE_INIT_FIB_SIZE;
     /* Insert a NULL entry as the default route */
