@@ -14,6 +14,8 @@ INDEX(__uint128_t a, int s, int n)
 {
     if ( 0 == ((s) + (n)) ) {
         return 0;
+    } else if ( 128 < ((s) + (n)) ) {
+        return ((a) << (((s) + (n)) - 128)) & ((1ULL << (n)) - 1);
     } else {
         return ((a) >> (128 - ((s) + (n)))) & ((1ULL << (n)) - 1);
     }
