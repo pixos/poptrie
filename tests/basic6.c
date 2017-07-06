@@ -109,6 +109,20 @@ test_lookup(void)
     }
     TEST_PROGRESS();
 
+    /* Route add */
+    addr = IPV6ADDR(0x2001, 0xdb8, 0xaaaa, 0xbbbb, 0, 0, 0, 1);
+    nexthop = (void *)9077;
+    ret = poptrie6_route_add(poptrie, addr, 128, nexthop);
+    if ( ret < 0 ) {
+        /* Failed to add */
+        return -1;
+    }
+    addr = IPV6ADDR(0x2001, 0xdb8, 0xaaaa, 0xbbbb, 0, 0, 0, 1);
+    if ( nexthop != poptrie6_lookup(poptrie, addr) ) {
+        return -1;
+    }
+    TEST_PROGRESS();
+
     /* Route update */
     addr = IPV6ADDR(0x2001, 0xdb8, 0x1, 0x0, 0, 0, 0, 0);
     nexthop = (void *)5678;
